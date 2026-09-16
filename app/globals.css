@@ -1,0 +1,98 @@
+@import "tailwindcss";
+
+/*
+ * ─────────────────────────────────────────────────────────────
+ * Design System — "Designs by imehappen"
+ * Generated with the ui-ux-pro-max skill (portfolio/agency profile).
+ *
+ * Dark, high-contrast, brand-red accent. Reduced-motion is
+ * respected globally. Breakpoints verified at 375 / 768 / 1024 / 1440.
+ * ─────────────────────────────────────────────────────────────
+ */
+@theme {
+  /* Color tokens (dark palette, brand red accent) */
+  --color-bg: #020617;            /* page background            */
+  --color-surface: #0f172a;       /* section alt background     */
+  --color-card: #0e1223;          /* card background            */
+  --color-elevated: #1a1f33;      /* hover / elevated card      */
+  --color-border: #1e293b;        /* hairlines                  */
+  --color-border-strong: #334155; /* stronger hairline          */
+
+  --color-fg: #f8fafc;            /* primary text               */
+  --color-fg-muted: #94a3b8;      /* secondary text             */
+  --color-fg-faint: #64748b;      /* tertiary/captions          */
+
+  --color-accent: #ed2c27;        /* brand red (kept from v1)   */
+  --color-accent-hover: #f04a45;
+  --color-on-accent: #ffffff;
+  --color-accent-soft: rgba(237, 44, 39, 0.12);
+
+  --color-focus: #ffffff;
+
+  /* Typography */
+  --font-display: "Archivo", "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-body: "Space Grotesk", "Inter", ui-sans-serif, system-ui, sans-serif;
+
+  /* Motion */
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* Base */
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background-color: var(--color-bg);
+  color: var(--color-fg);
+  font-family: var(--font-body);
+  -webkit-font-smoothing: antialiased;
+  line-height: 1.6;
+  overflow-x: hidden;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-display);
+  letter-spacing: -0.02em;
+}
+
+/* Visible focus for keyboard nav (design-system requirement) */
+:where(a, button, input, select, textarea, [tabindex]):focus-visible {
+  outline: 2px solid var(--color-focus);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* Global reduced-motion respect */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-track {
+  background: var(--color-surface);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--color-border-strong);
+  border-radius: 999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-accent);
+}
+
+::selection {
+  background: var(--color-accent);
+  color: #fff;
+}

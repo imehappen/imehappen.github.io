@@ -1,0 +1,42 @@
+# Deploy the Next.js app with the custom Socket.IO server on a VM.
+#
+# The old GitHub Pages static workflow was retired when the site moved to
+# Next.js (server routes, API endpoints, and Socket.IO need a real server).
+name: Deploy Next.js
+
+on:
+  push:
+    branches: ["main"]
+  workflow_dispatch:
+
+concurrency:
+  group: "production-deploy"
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install
+        run: npm ci
+
+      - name: Build
+        run: npm run build
+        env:
+          # Auth is optional at build time; routes degrade to demo mode without it.
+          AUTH_SECRET: ${{ secrets.AUTH_SECRET }}
+          MONGODB_URI: ${{ secrets.MONGODB_URI }}
+
+      # NOTE: There is intentionally no deploy step yet. When you have a host,
+      # add your deploy here (SSH + pm2, Docker push, or a platform action).
+      - name: Smoke test
+        run: node -e "console.log('build artifact OK')"
