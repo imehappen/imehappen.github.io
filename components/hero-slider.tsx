@@ -37,6 +37,8 @@ export function HeroSlider({ slides }: { slides: HomeSlide[] }) {
   const linksRef = useRef<HTMLDivElement | null>(null);
   const descRef = useRef<HTMLDivElement | null>(null);
   const imagesRef = useRef<HTMLDivElement | null>(null);
+  const prevEl = useRef<HTMLButtonElement | null>(null);
+  const nextEl = useRef<HTMLButtonElement | null>(null);
   const engines = useRef<MomentumSlider[]>([]);
   const imagesSlider = useRef<MomentumSlider | null>(null);
 
@@ -60,8 +62,8 @@ export function HeroSlider({ slides }: { slides: HomeSlide[] }) {
     if (count === 0 || !numbersEl || !titlesEl || !linksEl || !descEl || !imagesEl) return;
 
     const duration = reduceMotion ? 0 : SNAP_MS;
-    // Match original portfolio-carousel: no loop (loop: 0)
-    const loop = 0;
+    // Enable infinite loop — clamp to slide count for small carousels
+    const loop = Math.min(2, count);
 
     const numbers = new MomentumSlider({
       el: numbersEl,
@@ -113,6 +115,8 @@ export function HeroSlider({ slides }: { slides: HomeSlide[] }) {
       sync: [numbers, titles, links, desc],
       style: { ".ms-slide__image": { transform: [{ scale: [1.5, 1] }] } },
       change: (index) => setActiveIndex((prev) => (prev === index ? prev : index)),
+      prevEl: prevEl.current,
+      nextEl: nextEl.current,
     });
 
     engines.current = [images, numbers, titles, links, desc];
@@ -176,9 +180,9 @@ export function HeroSlider({ slides }: { slides: HomeSlide[] }) {
             </ul>
           </div>
 
-          {/* Eyebrow — small label above titles, synced */}
-          <p key={`eyebrow-${activeIndex}`} className="pc-eyebrow pc-fade">
-            {active?.eyebrow}
+          {/* Eyebrow — static label above titles (original portfolio-carousel has no eyebrow slider) */}
+          <p className="pc-eyebrow" aria-hidden="true">
+            {slides[0]?.eyebrow}
           </p>
 
           {/* Titles — vertical, reversed (next title enters from the top) */}
@@ -245,6 +249,30 @@ export function HeroSlider({ slides }: { slides: HomeSlide[] }) {
             />
           ))}
         </div>
+
+        {/* Prev/Next navigation arrows */}
+        <button
+          ref={prevEl}
+          type="button"
+          className="pc-nav pc-nav--prev slider-nav-btn"
+          aria-label="Previous slide"
+          aria-hidden={count <= 1}
+        >
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+            <path d="M15 18l-6-6 6-6" />
+          </svg>
+        </button>
+        <button
+          ref={nextEl}
+          type="button"
+          className="pc-nav pc-nav--next slider-nav-btn"
+          aria-label="Next slide"
+          aria-hidden={count <= 1}
+        >
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+            <path d="M9 6l6 6-6 6" />
+          </svg>
+        </button>
       </div>
     </section>
   );
