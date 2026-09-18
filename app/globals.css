@@ -114,7 +114,8 @@ h1, h2, h3, h4, h5, h6 {
    utilities and component classes (.lift-card, .slider-nav-btn, .reveal,
    .back-to-top, Swiper bullets…) still win and their intent is preserved.
    Transform properties (translate/scale/rotate) are intentionally OMITTED here
-   so component classes and Tailwind utilities fully control hover/tap motion. */
+   so component classes and Tailwind utilities fully control hover/tap motion.
+   Use .smooth-scale class for elements that need smooth scale transitions. */
 :where(
   a, button, input, select, textarea, summary, label, img,
   h1, h2, h3, h4, h5, h6, p, span, li, figure, figcaption,
@@ -131,6 +132,19 @@ h1, h2, h3, h4, h5, h6 {
     opacity var(--duration-fast) var(--ease-out-expo),
     filter var(--duration-slow) var(--ease-out-expo),
     box-shadow var(--duration-medium) var(--ease-out-expo);
+}
+
+/* Smooth scale utility — apply to any element for smooth hover/tap scale */
+.smooth-scale {
+  transition:
+    transform var(--duration-medium) var(--ease-out-expo),
+    scale var(--duration-medium) var(--ease-out-expo);
+}
+.smooth-scale:hover {
+  scale: 1.02;
+}
+.smooth-scale:active {
+  scale: 0.98;
 }
 
 /* Container surfaces (cards, panels, sections) ease their colour / shadow
@@ -275,29 +289,6 @@ h1, h2, h3, h4, h5, h6 {
   border-radius: 0.5rem;
   background: var(--color-card);
   box-shadow: 0 30px 80px -40px rgba(0, 0, 0, 0.9);
-  /* Fade edges of neighbor slides toward center */
-  mask-image: linear-gradient(
-    90deg,
-    transparent 0%,
-    rgba(0,0,0,0.15) 8%,
-    rgba(0,0,0,0.6) 18%,
-    black 35%,
-    black 65%,
-    rgba(0,0,0,0.6) 82%,
-    rgba(0,0,0,0.15) 92%,
-    transparent 100%
-  );
-  -webkit-mask-image: linear-gradient(
-    90deg,
-    transparent 0%,
-    rgba(0,0,0,0.15) 8%,
-    rgba(0,0,0,0.6) 18%,
-    black 35%,
-    black 65%,
-    rgba(0,0,0,0.6) 82%,
-    rgba(0,0,0,0.15) 92%,
-    transparent 100%
-  );
 }
 .pc-images .ms-slide__image {
   width: 100%;

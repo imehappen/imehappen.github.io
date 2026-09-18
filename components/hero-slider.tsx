@@ -114,22 +114,7 @@ export function HeroSlider({ slides }: { slides: HomeSlide[] }) {
       loop,
       animDuration: duration,
       sync: [numbers, titles, links, desc],
-      style: {
-        ".ms-slide__image": { transform: [{ scale: [1.5, 1] }] },
-        ".ms-slide__image-container": {
-          // diff=0 (center): no mask; diff=±1 (neighbors): fade edges
-          maskImage: [
-            `linear-gradient(90deg, transparent 0%, rgba(0,0,0,0.15) 8%, rgba(0,0,0,0.6) 18%, black 35%, black 65%, rgba(0,0,0,0.6) 82%, rgba(0,0,0,0.15) 92%, transparent 100%)`,
-            `linear-gradient(90deg, black 0%, black 100%)`,
-            `linear-gradient(90deg, transparent 0%, rgba(0,0,0,0.15) 8%, rgba(0,0,0,0.6) 18%, black 35%, black 65%, rgba(0,0,0,0.6) 82%, rgba(0,0,0,0.15) 92%, transparent 100%)`
-          ],
-          WebkitMaskImage: [
-            `linear-gradient(90deg, transparent 0%, rgba(0,0,0,0.15) 8%, rgba(0,0,0,0.6) 18%, black 35%, black 65%, rgba(0,0,0,0.6) 82%, rgba(0,0,0,0.15) 92%, transparent 100%)`,
-            `linear-gradient(90deg, black 0%, black 100%)`,
-            `linear-gradient(90deg, transparent 0%, rgba(0,0,0,0.15) 8%, rgba(0,0,0,0.6) 18%, black 35%, black 65%, rgba(0,0,0,0.6) 82%, rgba(0,0,0,0.15) 92%, transparent 100%)`
-          ]
-        }
-      },
+      style: { ".ms-slide__image": { transform: [{ scale: [1.5, 1] }] } },
       change: (index) => setActiveIndex((prev) => (prev === index ? prev : index)),
       prevEl: prevEl.current,
       nextEl: nextEl.current,
