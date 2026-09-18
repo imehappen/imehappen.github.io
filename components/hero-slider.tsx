@@ -1,133 +1,250 @@
 "use client";
 
 /**
- * HeroSlider — the "new infinite slider" that replaces the old static hero.
+ * HeroSlider — Portfolio-Carousel hero.
  *
- * Layout contract (per request):
- *  - Large screens (lg+): 50% image / 50% text. Text holds an eyebrow, a main
- *    headline, a smaller subtitle, and CTA button(s). Direction alternates
- *    (image-left, image-right) for rhythm.
- *  - Small screens: stacked VERTICALLY — image on top, text below.
- *  - Full-width (edge-to-edge), auto-advances every 6s, pauses on hover/focus
- *    and when the tab is hidden. Respects prefers-reduced-motion.
+ * A thin React wrapper around the momentum-slider engine
+ * (lib/momentum-slider.js). Structure mirrors lmgonzalves/momentum-slider's
+ * "Portfolio Carousel": four interleaved sliders sharing one drag gesture —
+ *
+ *   .pc-numbers  huge index watermark   (synced, non-interactive)
+ *   .pc-images   the draggable track    (interactive, throws with velocity)
+ *   .pc-titles   vertical title column  (synced, reversed)
+ *   .pc-links    vertical CTA column    (synced)
+ *
+ * Motion contract ("all the momentums"): the image track follows the pointer
+ * 1:1 with rubber-band past the edges; the last ~100ms of movement becomes the
+ * release velocity; on release it eases out (easeOutQuad over ~500ms) to the
+ * nearest slide while every companion slider rides along proportionally.
  */
 
-import { useCallback, useEffect, useRef, useState } from "react";
-import Image from "next/image";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
+import MomentumSlider from "@/lib/momentum-slider";
 import type { HomeSlide } from "@/lib/home-slides";
 
-const AUTOPLAY_MS = 6000;
+const SNAP_MS = 500;
+
+function pad(n: number): string {
+  return n < 10 ? `0${n}` : String(n);
+}
 
 export function HeroSlider({ slides }: { slides: HomeSlide[] }) {
-  const [index, setIndex] = useState(0);
-  const [paused, setPaused] = useState(false);
-  const timer = useRef<ReturnType<typeof setInterval> | null>(null);
   const count = slides.length;
 
-  const go = useCallback((i: number) => setIndex(((i % count) + count) % count), [count]);
+  const numbersRef = useRef<HTMLDivElement | null>(null);
+  const titlesRef = useRef<HTMLDivElement | null>(null);
+  const linksRef = useRef<HTMLDivElement | null>(null);
+  const descRef = useRef<HTMLDivElement | null>(null);
+  const imagesRef = useRef<HTMLDivElement | null>(null);
+  const engines = useRef<MomentumSlider[]>([]);
+  const imagesSlider = useRef<MomentumSlider | null>(null);
+
+  const [activeIndex, setActiveIndex] = useState(0);
+  const [reduceMotion, setReduceMotion] = useState(false);
 
   useEffect(() => {
-    if (paused || count <= 1) return;
-    const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    if (reduce) return;
+    const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
+    setReduceMotion(mq.matches);
+    const onChange = (e: MediaQueryListEvent) => setReduceMotion(e.matches);
+    mq.addEventListener("change", onChange);
+    return () => mq.removeEventListener("change", onChange);
+  }, []);
 
-    timer.current = setInterval(() => setIndex((i) => (i + 1) % count), AUTOPLAY_MS);
+  useEffect(() => {
+    const numbersEl = numbersRef.current;
+    const titlesEl = titlesRef.current;
+    const linksEl = linksRef.current;
+    const descEl = descRef.current;
+    const imagesEl = imagesRef.current;
+    if (count === 0 || !numbersEl || !titlesEl || !linksEl || !descEl || !imagesEl) return;
+
+    const duration = reduceMotion ? 0 : SNAP_MS;
+    // Match original portfolio-carousel: no loop (loop: 0)
+    const loop = 0;
+
+    const numbers = new MomentumSlider({
+      el: numbersEl,
+      cssClass: "pc--numbers",
+      vertical: false,
+      interactive: false,
+      loop,
+      animDuration: duration,
+      style: { transform: [{ scale: [0.4, 1] }], opacity: [0, 1] },
+    });
+
+    const titles = new MomentumSlider({
+      el: titlesEl,
+      cssClass: "pc--titles",
+      vertical: true,
+      reverse: true,
+      interactive: false,
+      loop,
+      animDuration: duration,
+      style: { opacity: [0, 1] },
+    });
+
+    const links = new MomentumSlider({
+      el: linksEl,
+      cssClass: "pc--links",
+      vertical: true,
+      interactive: false,
+      loop,
+      animDuration: duration,
+    });
+
+    const desc = new MomentumSlider({
+      el: descEl,
+      cssClass: "pc--desc",
+      vertical: true,
+      interactive: false,
+      loop,
+      animDuration: duration,
+      style: { opacity: [0, 1] },
+    });
+
+    const images = new MomentumSlider({
+      el: imagesEl,
+      cssClass: "pc--images",
+      vertical: false,
+      interactive: true,
+      loop,
+      animDuration: duration,
+      sync: [numbers, titles, links, desc],
+      style: { ".ms-slide__image": { transform: [{ scale: [1.5, 1] }] } },
+      change: (index) => setActiveIndex((prev) => (prev === index ? prev : index)),
+    });
+
+    engines.current = [images, numbers, titles, links, desc];
+    imagesSlider.current = images;
+    setActiveIndex(images.getCurrentIndex());
+
+    const observer = new ResizeObserver(() => {
+      engines.current.forEach((engine) => engine.refresh());
+    });
+    observer.observe(imagesEl);
+
     return () => {
-      if (timer.current) clearInterval(timer.current);
+      observer.disconnect();
+      engines.current.forEach((engine) => engine.destroy());
+      engines.current = [];
+      imagesSlider.current = null;
     };
-  }, [paused, count]);
+  }, [count, reduceMotion]);
+
+  if (count === 0) return null;
+
+  const active = slides[activeIndex] ?? slides[0];
 
   return (
     <section
       id="home"
       aria-roledescription="carousel"
       aria-label="Featured highlights"
-      className="relative w-full overflow-hidden pt-16"
-      onMouseEnter={() => setPaused(true)}
-      onMouseLeave={() => setPaused(false)}
-      onFocus={() => setPaused(true)}
-      onBlur={() => setPaused(false)}
+      className="hero-carousel"
     >
-      <div
-        className="flex transition-transform duration-700 ease-[cubic-bezier(0.16,1,0.3,1)]"
-        style={{ transform: `translateX(-${index * 100}%)` }}
-        aria-live="polite"
-      >
-        {slides.map((slide, i) => {
-          const imageLeft = i % 2 === 0;
-          return (
-            <div
-              key={slide.title}
-              role="group"
-              aria-roledescription="slide"
-              aria-label={`${i + 1} of ${count}`}
-              aria-hidden={i !== index}
-              className="grid min-h-[calc(100svh-4rem)] w-full shrink-0 grid-cols-1 lg:min-h-[calc(100vh-4rem)] lg:grid-cols-2"
-            >
-              {/* Image half — top on mobile, left/right on desktop */}
-              <div
-                className={`relative order-1 min-h-[38vh] w-full overflow-hidden sm:min-h-[46vh] lg:order-${imageLeft ? "1" : "2"} lg:min-h-full`}
-              >
-                <Image
-                  src={slide.image}
-                  alt={slide.alt}
-                  fill
-                  priority={i === 0}
-                  sizes="(max-width: 1024px) 100vw, 50vw"
-                  className="object-cover"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-bg/70 via-transparent to-transparent lg:bg-gradient-to-r lg:from-transparent lg:to-bg/40" />
-              </div>
+      <h1 className="sr-only">{active?.title}</h1>
 
-              {/* Text half — bottom on mobile, left/right on desktop */}
-              <div
-                className={`order-2 flex w-full flex-col justify-center px-6 py-10 sm:px-10 lg:order-${imageLeft ? "2" : "1"} lg:px-16 xl:px-24`}
-              >
-                <p className="mb-4 inline-flex w-fit items-center gap-2 rounded-full border border-border-strong bg-card px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-accent">
-                  {slide.eyebrow}
-                </p>
-                <h1 className="font-display text-4xl font-bold leading-[1.05] tracking-tight text-fg sm:text-5xl xl:text-6xl">
-                  {slide.title}
-                </h1>
-                <p className="mt-5 max-w-xl text-base text-fg-muted sm:text-lg">{slide.subtitle}</p>
+      <div className="pc-stage">
+        <div className="sliders-container">
+          {/* Huge index watermark — synced to the image track */}
+          <div ref={numbersRef} className="ms-container pc-numbers" aria-hidden="true">
+            <ul className="ms-track">
+              {slides.map((_, i) => (
+                <li className="ms-slide" key={`num-${i}`}>
+                  <span>{pad(i + 1)}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
 
-                <div className="mt-8 flex flex-wrap items-center gap-4">
-                  <Link
-                    href={slide.ctaHref}
-                    className="cursor-pointer rounded-lg bg-accent px-7 py-3.5 text-sm font-semibold uppercase tracking-wider text-on-accent transition-all duration-200 hover:-translate-y-0.5 hover:bg-accent-hover hover:shadow-[0_12px_35px_rgba(237,44,39,0.4)]"
-                  >
-                    {slide.ctaLabel}
-                  </Link>
-                  {slide.secondaryLabel && slide.secondaryHref && (
+          {/* The interactive momentum track */}
+          <div ref={imagesRef} className="ms-container pc-images">
+            <ul className="ms-track">
+              {slides.map((slide, i) => (
+                <li className="ms-slide" key={`img-${i}`}>
+                  <div className="ms-slide__image-container">
+                    <div
+                      className="ms-slide__image"
+                      style={{ backgroundImage: `url("${slide.image}")` }}
+                      role="img"
+                      aria-label={slide.alt}
+                    />
+                  </div>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          {/* Eyebrow — small label above titles, synced */}
+          <p key={`eyebrow-${activeIndex}`} className="pc-eyebrow pc-fade">
+            {active?.eyebrow}
+          </p>
+
+          {/* Titles — vertical, reversed (next title enters from the top) */}
+          <div ref={titlesRef} className="ms-container pc-titles">
+            <ul className="ms-track">
+              {slides.map((slide, i) => (
+                <li className="ms-slide" key={`title-${i}`}>
+                  <h2>{slide.title}</h2>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          {/* CTA links — vertical column below titles */}
+          <div ref={linksRef} className="ms-container pc-links">
+            <ul className="ms-track">
+              {slides.map((slide, i) => (
+                <li className="ms-slide" key={`link-${i}`} aria-hidden={i !== activeIndex}>
+                  <div className="pc-links__row">
                     <Link
-                      href={slide.secondaryHref}
-                      className="cursor-pointer rounded-lg border border-border-strong px-7 py-3.5 text-sm font-semibold uppercase tracking-wider text-fg transition-all duration-200 hover:border-accent hover:bg-accent-soft hover:text-accent"
+                      href={slide.ctaHref}
+                      tabIndex={i === activeIndex ? 0 : -1}
+                      className="pc-cta"
                     >
-                      {slide.secondaryLabel}
+                      {slide.ctaLabel}
                     </Link>
-                  )}
-                </div>
-              </div>
-            </div>
-          );
-        })}
-      </div>
+                    {slide.secondaryLabel && slide.secondaryHref && (
+                      <Link
+                        href={slide.secondaryHref}
+                        tabIndex={i === activeIndex ? 0 : -1}
+                        className="pc-cta pc-cta--ghost"
+                      >
+                        {slide.secondaryLabel}
+                      </Link>
+                    )}
+                  </div>
+                </li>
+              ))}
+            </ul>
+          </div>
 
-      {/* Dots */}
-      <div className="absolute bottom-6 left-1/2 z-10 flex -translate-x-1/2 gap-2.5">
-        {slides.map((s, i) => (
-          <button
-            key={s.title}
-            type="button"
-            aria-label={`Go to slide ${i + 1}`}
-            aria-current={i === index}
-            onClick={() => go(i)}
-            className={`h-2.5 cursor-pointer rounded-full transition-all duration-300 ${
-              i === index ? "w-8 bg-accent" : "w-2.5 bg-fg/25 hover:bg-fg/50"
-            }`}
-          />
-        ))}
+          {/* Description — vertical synced column below links */}
+          <div ref={descRef} className="ms-container pc-desc">
+            <ul className="ms-track">
+              {slides.map((slide, i) => (
+                <li className="ms-slide" key={`desc-${i}`}>
+                  <p>{slide.subtitle}</p>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </div>
+
+        {/* Line pagination */}
+        <div className="pc-pagination" role="group" aria-label="Choose slide">
+          {slides.map((slide, i) => (
+            <button
+              key={`page-${i}`}
+              type="button"
+              className="pc-pagination__btn"
+              aria-label={`Go to slide ${i + 1}: ${slide.title}`}
+              aria-current={i === activeIndex ? "true" : undefined}
+              onClick={() => imagesSlider.current?.select(i)}
+            />
+          ))}
+        </div>
       </div>
     </section>
   );
