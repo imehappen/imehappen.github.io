@@ -247,20 +247,20 @@ h1, h2, h3, h4, h5, h6 {
 /* Images — the interactive momentum track */
 .pc-images {
   z-index: 10;
-  width: var(--pc-slide-w);
+  width: 100%;
   height: var(--pc-slide-h);
   top: 50%;
   left: 50%;
-  margin-left: calc(var(--pc-slide-w) / -2);
-  margin-top: calc(var(--pc-slide-h) / -2);
+  transform: translate(-50%, -50%);
   cursor: grab;
   touch-action: pan-y;
+  overflow: visible; /* allow neighbors to peek */
 }
 .pc-images:active {
   cursor: grabbing;
 }
 .pc-images .ms-track {
-  left: 0;
+  left: calc(50% - (var(--pc-slide-w) / 2));
   top: 0;
 }
 .pc-images .ms-slide {

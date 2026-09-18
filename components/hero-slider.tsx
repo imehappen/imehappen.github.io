@@ -41,6 +41,7 @@ export function HeroSlider({ slides }: { slides: HomeSlide[] }) {
   const nextEl = useRef<HTMLButtonElement | null>(null);
   const engines = useRef<MomentumSlider[]>([]);
   const imagesSlider = useRef<MomentumSlider | null>(null);
+  const autoplayTimer = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const [activeIndex, setActiveIndex] = useState(0);
   const [reduceMotion, setReduceMotion] = useState(false);
@@ -123,6 +124,13 @@ export function HeroSlider({ slides }: { slides: HomeSlide[] }) {
     imagesSlider.current = images;
     setActiveIndex(images.getCurrentIndex());
 
+    // Autoplay — advance every 5s when not reduced motion
+    if (!reduceMotion) {
+      autoplayTimer.current = setInterval(() => {
+        imagesSlider.current?.next();
+      }, 5000);
+    }
+
     const observer = new ResizeObserver(() => {
       engines.current.forEach((engine) => engine.refresh());
     });
@@ -133,6 +141,8 @@ export function HeroSlider({ slides }: { slides: HomeSlide[] }) {
       engines.current.forEach((engine) => engine.destroy());
       engines.current = [];
       imagesSlider.current = null;
+      if (autoplayTimer.current) clearInterval(autoplayTimer.current);
+      autoplayTimer.current = null;
     };
   }, [count, reduceMotion]);
 
@@ -149,7 +159,13 @@ export function HeroSlider({ slides }: { slides: HomeSlide[] }) {
     >
       <h1 className="sr-only">{active?.title}</h1>
 
-      <div className="pc-stage">
+      <div className="pc-stage"
+         onMouseEnter={() => autoplayTimer.current && clearInterval(autoplayTimer.current)}
+         onMouseLeave={() => {
+           if (!reduceMotion && !autoplayTimer.current) {
+             autoplayTimer.current = setInterval(() => imagesSlider.current?.next(), 5000);
+           }
+         }}>
         <div className="sliders-container">
           {/* Huge index watermark — synced to the image track */}
           <div ref={numbersRef} className="ms-container pc-numbers" aria-hidden="true">
