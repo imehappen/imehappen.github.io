@@ -63,8 +63,7 @@ export function HeroSlider({ slides }: { slides: HomeSlide[] }) {
     if (count === 0 || !numbersEl || !titlesEl || !linksEl || !descEl || !imagesEl) return;
 
     const duration = reduceMotion ? 0 : SNAP_MS;
-    // Enable infinite loop — clamp to slide count for small carousels
-    const loop = Math.min(2, count);
+    const loop = 0;
 
     const numbers = new MomentumSlider({
       el: numbersEl,
