@@ -78,13 +78,13 @@ export default async function WorkDetailPage({ params }: { params: Promise<{ slu
           <div className="mt-8 flex flex-wrap gap-4">
             <Link
               href={`/order?work=${work.slug}`}
-              className="cursor-pointer rounded-lg bg-accent px-8 py-3.5 text-sm font-semibold uppercase tracking-wider text-on-accent transition-all duration-200 hover:-translate-y-0.5 hover:bg-accent-hover hover:shadow-[0_12px_35px_rgba(237,44,39,0.4)]"
+              className="cursor-pointer rounded-lg bg-accent px-8 py-3.5 text-sm font-semibold uppercase tracking-wider text-on-accent transition-all duration-medium hover:-translate-y-0.5 hover:bg-accent-hover hover:shadow-[0_12px_35px_rgba(237,44,39,0.4)]"
             >
               Order This Service
             </Link>
             <a
               href="mailto:imehappen@gmail.com"
-              className="cursor-pointer rounded-lg border border-border-strong px-8 py-3.5 text-sm font-semibold uppercase tracking-wider text-fg transition-all duration-200 hover:border-accent hover:bg-accent-soft hover:text-accent"
+              className="cursor-pointer rounded-lg border border-border-strong px-8 py-3.5 text-sm font-semibold uppercase tracking-wider text-fg transition-all duration-fast hover:border-accent hover:bg-accent-soft hover:text-accent"
             >
               Ask a Question
             </a>
@@ -137,7 +137,7 @@ export default async function WorkDetailPage({ params }: { params: Promise<{ slu
               <Link
                 key={rel.id}
                 href={`/works/${rel.slug}`}
-                className="group cursor-pointer overflow-hidden rounded-2xl border border-border bg-card transition-all duration-300 hover:-translate-y-1.5 hover:border-border-strong"
+                className="group lift-card cursor-pointer overflow-hidden rounded-2xl border border-border bg-card hover:-translate-y-1.5 hover:border-border-strong"
               >
                 <div className="relative aspect-[4/3] overflow-hidden">
                   <Image
@@ -145,7 +145,7 @@ export default async function WorkDetailPage({ params }: { params: Promise<{ slu
                     alt={rel.media[0]?.alt ?? rel.title}
                     fill
                     sizes="(max-width: 640px) 100vw, 33vw"
-                    className="object-cover transition-transform duration-500 group-hover:scale-105"
+                    className="lift-zoom object-cover"
                   />
                 </div>
                 <div className="p-5">

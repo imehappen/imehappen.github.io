@@ -43,7 +43,10 @@ export async function getWorks(): Promise<WorkView[]> {
 
   try {
     const { Work } = await import("@/lib/models");
+    const { getMongoConnection } = await import("@/lib/mongodb");
+    await getMongoConnection();
     const docs = await Work.find({ published: true }).sort({ featured: -1, createdAt: -1 }).lean();
+    if (docs.length === 0) return seedWorks.map((w) => workToView(w));
     return docs.map((d) => workToView(d as unknown as WorkSeed));
   } catch (err) {
     console.error("[works] falling back to seed data:", err);
@@ -56,7 +59,4 @@ export async function getWorkBySlug(slug: string): Promise<WorkView | null> {
   return all.find((w) => w.slug === slug) ?? null;
 }
 
-export function formatPrice(price?: number): string {
-  if (price == null) return "Custom Pricing";
-  return `From $${price.toLocaleString("en-US")}`;
-}
+export { formatPrice } from "@/lib/pricing";

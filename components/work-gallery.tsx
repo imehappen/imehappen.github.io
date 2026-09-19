@@ -59,7 +59,7 @@ export function WorkGallery({ media, title }: { media: WorkMediaSeed[]; title: s
               aria-selected={i === activeIdx}
               aria-label={`Show ${m.kind} ${i + 1}: ${m.alt || title}`}
               onClick={() => setActiveIdx(i)}
-              className={`relative h-20 w-28 shrink-0 cursor-pointer overflow-hidden rounded-lg border-2 transition-all duration-200 ${
+              className={`relative h-20 w-28 shrink-0 cursor-pointer overflow-hidden rounded-lg border-2 transition-all duration-fast ${
                 i === activeIdx ? "border-accent" : "border-border opacity-60 hover:opacity-100"
               }`}
             >

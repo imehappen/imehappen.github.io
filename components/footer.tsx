@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Logo } from "@/components/logo";
+import { getSettingsContent, getContactContent } from "@/lib/site-content";
 
 const socials = [
   {
@@ -24,45 +25,69 @@ const socials = [
   },
 ];
 
-export function Footer() {
+export async function Footer() {
+  const [settings, contact] = await Promise.all([getSettingsContent(), getContactContent()]);
+
   return (
     <footer className="border-t border-border bg-surface">
       <div className="mx-auto max-w-7xl px-5 py-14 sm:px-8">
-        <div className="flex flex-col items-start justify-between gap-10 md:flex-row md:items-center">
+        <div className="flex flex-col items-start justify-between gap-10 md:flex-row md:items-start">
           <div>
             <Link href="/" className="flex items-center gap-2.5 font-display text-lg font-bold text-fg">
               <Logo className="h-8 w-8" />
               Designs by imehappen
             </Link>
-            <p className="mt-3 max-w-sm text-sm text-fg-muted">
-              Systems developer bringing business systems online — full-stack engineering with premium design.
-            </p>
+            <p className="mt-3 max-w-sm text-sm text-fg-muted">{settings.tagline}</p>
           </div>
 
-          <nav aria-label="Social links" className="flex gap-3">
-            {socials.map((s) => (
-              <a
-                key={s.label}
-                href={s.href}
-                target="_blank"
-                rel="noopener noreferrer"
-                aria-label={s.label}
-                className="flex h-11 w-11 cursor-pointer items-center justify-center rounded-full border border-border text-fg-muted transition-all duration-200 hover:border-accent hover:bg-accent-soft hover:text-accent"
-              >
-                <svg viewBox="0 0 24 24" className="h-5 w-5 fill-current" aria-hidden="true">
-                  <path d={s.path} />
-                </svg>
-              </a>
-            ))}
+          <nav aria-label="Footer" className="flex flex-col gap-8 sm:flex-row sm:gap-16">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-fg-faint">Pages</p>
+              <ul className="mt-3 space-y-2 text-sm">
+                {[
+                  ["/", "Home"],
+                  ["/works", "Work"],
+                  ["/services", "Services"],
+                  ["/about", "About"],
+                  ["/contact", "Contact"],
+                  ["/order", "Order"],
+                ].map(([href, label]) => (
+                  <li key={href}>
+                    <Link href={href} className="cursor-pointer text-fg-muted transition-colors hover:text-accent">
+                      {label}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-fg-faint">Follow</p>
+              <nav aria-label="Social links" className="mt-3 flex gap-3">
+                {socials.map((s) => (
+                  <a
+                    key={s.label}
+                    href={s.href}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    aria-label={s.label}
+                    className="flex h-11 w-11 cursor-pointer items-center justify-center rounded-full border border-border text-fg-muted transition-all duration-fast hover:border-accent hover:bg-accent-soft hover:text-accent"
+                  >
+                    <svg viewBox="0 0 24 24" className="h-5 w-5 fill-current" aria-hidden="true">
+                      <path d={s.path} />
+                    </svg>
+                  </a>
+                ))}
+              </nav>
+            </div>
           </nav>
         </div>
 
         <div className="mt-10 flex flex-col items-start justify-between gap-4 border-t border-border pt-6 text-sm text-fg-faint sm:flex-row sm:items-center">
-          <p>© {new Date().getFullYear()} Designs by imehappen · Nairobi, Kenya</p>
+          <p>© {new Date().getFullYear()} {settings.siteName} · {contact.location}</p>
           <p>
-            hello@imehappen.com ·{" "}
-            <a href="tel:+254702483879" className="cursor-pointer text-fg-muted underline-offset-4 hover:text-accent hover:underline">
-              +254 (7) 02 483-879
+            {contact.email} ·{" "}
+            <a href={`tel:${contact.phone}`} className="cursor-pointer text-fg-muted underline-offset-4 hover:text-accent hover:underline">
+              {contact.phoneDisplay}
             </a>
           </p>
         </div>

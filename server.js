@@ -9,8 +9,8 @@
  *   const io = globalThis.__io?.io;
  *   io?.emit("order:created", { orderNumber: "ORD-..." });
  *
- * Run with:  npm run dev   (development)
- *            npm start     (production, after `npm run build`)
+ * Run with:  pnpm run dev   (development)
+ *            pnpm start     (production, after `pnpm run build`)
  */
 const { createServer } = require("http");
 const next = require("next");

@@ -122,23 +122,26 @@ h1, h2, h3, h4, h5, h6 {
   svg, path, [role="button"], [role="tab"]
 ) {
   transition:
-    color var(--duration-fast) var(--ease-out-expo),
-    background-color var(--duration-fast) var(--ease-out-expo),
-    border-color var(--duration-fast) var(--ease-out-expo),
-    outline-color var(--duration-fast) var(--ease-out-expo),
-    text-decoration-color var(--duration-fast) var(--ease-out-expo),
-    fill var(--duration-fast) var(--ease-out-expo),
-    stroke var(--duration-fast) var(--ease-out-expo),
-    opacity var(--duration-fast) var(--ease-out-expo),
-    filter var(--duration-slow) var(--ease-out-expo),
-    box-shadow var(--duration-medium) var(--ease-out-expo);
+    color 0.3s var(--ease-out-expo),
+    background-color 0.3s var(--ease-out-expo),
+    border-color 0.3s var(--ease-out-expo),
+    outline-color 0.3s var(--ease-out-expo),
+    text-decoration-color 0.3s var(--ease-out-expo),
+    fill 0.3s var(--ease-out-expo),
+    stroke 0.3s var(--ease-out-expo),
+    opacity 0.3s var(--ease-out-expo),
+    filter 0.3s var(--ease-out-expo),
+    box-shadow 0.3s var(--ease-out-expo),
+    transform 0.3s var(--ease-out-expo),
+    translate 0.3s var(--ease-out-expo),
+    scale 0.3s var(--ease-out-expo);
 }
 
 /* Smooth scale utility — apply to any element for smooth hover/tap scale */
 .smooth-scale {
   transition:
-    transform var(--duration-medium) var(--ease-out-expo),
-    scale var(--duration-medium) var(--ease-out-expo);
+    transform 0.3s var(--ease-out-expo),
+    scale 0.3s var(--ease-out-expo);
 }
 .smooth-scale:hover {
   scale: 1.02;
@@ -156,12 +159,15 @@ h1, h2, h3, h4, h5, h6 {
   ul, ol, dl, form, blockquote
 ) {
   transition:
-    color var(--duration-fast) var(--ease-out-expo),
-    background-color var(--duration-fast) var(--ease-out-expo),
-    border-color var(--duration-fast) var(--ease-out-expo),
-    outline-color var(--duration-fast) var(--ease-out-expo),
-    box-shadow var(--duration-medium) var(--ease-out-expo),
-    opacity var(--duration-fast) var(--ease-out-expo);
+    color 0.3s var(--ease-out-expo),
+    background-color 0.3s var(--ease-out-expo),
+    border-color 0.3s var(--ease-out-expo),
+    outline-color 0.3s var(--ease-out-expo),
+    box-shadow 0.3s var(--ease-out-expo),
+    opacity 0.3s var(--ease-out-expo),
+    transform 0.3s var(--ease-out-expo),
+    translate 0.3s var(--ease-out-expo),
+    scale 0.3s var(--ease-out-expo);
 }
 
 /* Two-tone headline treatment: rest of the text clipped to the brand gradient */
@@ -197,7 +203,6 @@ h1, h2, h3, h4, h5, h6 {
    - Numbers: huge watermark centered behind images (synced, non-interactive)
    - Titles: vertical column on left, reversed (synced)
    - Links: vertical column below titles (synced)
-   - Description: vertical column below links (synced)
    - Pagination: line indicators bottom-left
    
    All motion driven by JS engine (rAF), no CSS transitions on track/slides.
@@ -212,7 +217,6 @@ h1, h2, h3, h4, h5, h6 {
   --pc-slide-h: clamp(19rem, 56vh, 32rem);
   --pc-title-h: clamp(6.5rem, 15vh, 10rem);
   --pc-link-h: 3.5rem;
-  --pc-desc-h: 4rem;
   --pc-num-w: clamp(6rem, 22vw, 15rem);
 }
 
@@ -250,15 +254,22 @@ h1, h2, h3, h4, h5, h6 {
   user-select: none;
 }
 
-/* The momentum engine writes transform/opacity inline on every frame — these
-   must never be re-interpolated by the global CSS transitions above. */
+/* The momentum engine writes transform/opacity inline on every frame — on the
+   track, on the image, AND on the .ms-slide <li> itself (numbers scale/fade,
+   titles fade). None of these may be re-interpolated by the global :where()
+   transitions above, otherwise every frame lags 0.3s behind the drag.
+   `transition` is not inherited, so children (CTA buttons, cards) keep their
+   own hover transitions. */
 .sliders-container .ms-track,
 .sliders-container .ms-slide,
 .sliders-container .ms-slide__image {
   transition: none !important;
 }
 
-/* Images — the interactive momentum track */
+/* Images — the interactive momentum track.
+   Reference uses overflow:hidden on desktop so only the current slide +
+   a sliver of its neighbours are visible; overflow:visible on small screens
+   so the full strip peeks through. */
 .pc-images {
   z-index: 10;
   width: 100%;
@@ -268,7 +279,7 @@ h1, h2, h3, h4, h5, h6 {
   transform: translate(-50%, -50%);
   cursor: grab;
   touch-action: pan-y;
-  overflow: visible; /* allow neighbors to peek */
+  overflow: hidden;
 }
 .pc-images:active {
   cursor: grabbing;
@@ -276,6 +287,7 @@ h1, h2, h3, h4, h5, h6 {
 .pc-images .ms-track {
   left: calc(50% - (var(--pc-slide-w) / 2));
   top: 0;
+  will-change: transform;
 }
 .pc-images .ms-slide {
   width: var(--pc-slide-w);
@@ -323,38 +335,6 @@ h1, h2, h3, h4, h5, h6 {
   line-height: 1;
   letter-spacing: -0.05em;
   color: color-mix(in srgb, var(--color-fg) 9%, transparent);
-}
-
-/* Eyebrow — small label above titles, synced */
-.pc-eyebrow {
-  z-index: 20;
-  left: var(--pc-gutter);
-  top: calc(50% - var(--pc-title-h) / 2 - 3rem);
-  width: min(30rem, calc(50% - var(--pc-gutter)));
-  height: 2.5rem;
-  overflow: hidden;
-  pointer-events: none;
-}
-.pc-eyebrow .ms-track {
-  left: 0;
-  right: 0;
-  top: 0;
-  flex-direction: column;
-}
-.pc-eyebrow .ms-slide {
-  width: 100%;
-  height: 2.5rem;
-  justify-content: flex-start;
-  white-space: normal;
-}
-.pc-eyebrow span {
-  margin: 0;
-  font-size: 0.7rem;
-  font-weight: 700;
-  letter-spacing: 0.24em;
-  text-transform: uppercase;
-  color: var(--color-accent);
-  text-shadow: 0 2px 12px rgba(0, 0, 0, 0.75);
 }
 
 /* Titles — vertical, reversed (next title enters from the top) */
@@ -433,11 +413,11 @@ h1, h2, h3, h4, h5, h6 {
   text-transform: uppercase;
   white-space: nowrap;
   transition:
-    background-color var(--duration-fast) var(--ease-out-expo),
-    border-color var(--duration-fast) var(--ease-out-expo),
-    color var(--duration-fast) var(--ease-out-expo),
-    translate var(--duration-fast) var(--ease-out-expo),
-    box-shadow var(--duration-medium) var(--ease-out-expo);
+    background-color 0.3s var(--ease-out-expo),
+    border-color 0.3s var(--ease-out-expo),
+    color 0.3s var(--ease-out-expo),
+    translate 0.3s var(--ease-out-expo),
+    box-shadow 0.3s var(--ease-out-expo);
 }
 .pc-cta:hover {
   background: var(--color-accent-hover);
@@ -454,37 +434,6 @@ h1, h2, h3, h4, h5, h6 {
   border-color: var(--color-accent);
   color: var(--color-accent);
   box-shadow: none;
-}
-
-/* Description — vertical synced column below links */
-.pc-desc {
-  z-index: 20;
-  left: var(--pc-gutter);
-  top: calc(50% + var(--pc-title-h) / 2 + var(--pc-link-h) + 3rem);
-  width: min(30rem, calc(50% - var(--pc-gutter)));
-  height: var(--pc-desc-h);
-  overflow: hidden;
-  pointer-events: none;
-}
-.pc-desc .ms-track {
-  left: 0;
-  right: 0;
-  top: 0;
-  flex-direction: column;
-}
-.pc-desc .ms-slide {
-  width: 100%;
-  height: var(--pc-desc-h);
-  justify-content: flex-start;
-  white-space: normal;
-}
-.pc-desc p {
-  margin: 0;
-  max-width: 28rem;
-  font-size: 0.95rem;
-  line-height: 1.6;
-  color: var(--color-fg-muted);
-  text-shadow: 0 2px 12px rgba(0, 0, 0, 0.75);
 }
 
 /* Line pagination — bottom left */
@@ -532,76 +481,104 @@ h1, h2, h3, h4, h5, h6 {
   outline-offset: 2px;
 }
 
-/* Tablet / mobile — stack copy under image */
+/* Large screens — hero image 30% taller (32rem → 41.6rem cap, 56vh → 73vh),
+   but never taller than the stage can hold (100svh minus nav + stage padding
+   + pagination room) so short laptops don't clip or collide with pagination. */
+@media (min-width: 1024px) {
+  .hero-carousel {
+    /* --pc-boost is set inline by HeroSlider from Admin → Site Settings
+       (1 = original, 1.3 = +30%). */
+    --pc-boost: 1.3;
+    --pc-slide-h: clamp(
+      24rem,
+      min(calc(56vh * var(--pc-boost)), 100svh - 16rem),
+      calc(32rem * var(--pc-boost))
+    );
+  }
+}
+
+/* Tablet / mobile — real stacked flow: image → title → CTAs → pagination.
+   Every slider becomes an in-flow block (the engine only needs each container
+   to have an explicit height); nothing is guessed with absolute offsets, so
+   copy can never land on top of the image. */
 @media (max-width: 1023px) {
+  .hero-carousel {
+    --pc-slide-w: clamp(15rem, 74vw, 30rem);
+    --pc-title-h: clamp(5.75rem, 18vh, 8.5rem);
+    --pc-num-w: clamp(5rem, 20vw, 9rem);
+  }
+  .pc-stage {
+    min-height: 0;
+    padding: 1.25rem 0 4.75rem;
+  }
+  .sliders-container {
+    display: flex;
+    flex-direction: column;
+    height: auto;
+    min-height: 0;
+  }
   .pc-images {
-    height: clamp(16rem, 45vh, 24rem);
+    position: relative;
+    order: 1;
+    top: auto;
+    left: auto;
+    transform: none;
+    height: clamp(13rem, 42svh, 24rem);
+    overflow: visible; /* neighbours peek on small screens */
   }
+  /* Watermark: behind the top of the image (the image box is 80% high and
+     centred, so the number shows in the empty band above it). */
   .pc-numbers {
-    width: clamp(5rem, 20vw, 10rem);
-    height: clamp(5rem, 20vw, 10rem);
+    top: 0;
+    margin-top: 0;
   }
-  .pc-numbers .ms-track {
-    left: calc(50% - (var(--pc-num-w) / 2));
-    top: 4%;
+  .pc-numbers .ms-slide {
+    font-size: clamp(3.25rem, 14vw, 7rem);
   }
   .pc-titles,
-  .pc-links,
-  .pc-desc {
-    left: var(--pc-gutter);
-    right: var(--pc-gutter);
-    width: auto;
+  .pc-links {
+    position: relative;
+    left: auto;
     top: auto;
-    transform: none;
+    margin-top: 0;
+    width: auto;
+    margin-left: var(--pc-gutter);
+    margin-right: var(--pc-gutter);
   }
   .pc-titles {
-    bottom: clamp(18rem, 45vh, 24rem);
+    order: 2;
+    margin-top: 1.5rem;
+  }
+  .pc-titles h2 {
+    font-size: clamp(1.5rem, 6.4vw, 2.6rem);
   }
   .pc-links {
-    bottom: clamp(13rem, 32vh, 18rem);
+    order: 3;
+    margin-top: 0.75rem;
   }
-  .pc-desc {
-    bottom: clamp(8rem, 20vh, 12rem);
+  .pc-cta {
+    padding: 0.7rem 1.1rem;
+    font-size: 0.7rem;
+    letter-spacing: 0.1em;
   }
   .pc-pagination {
-    left: 50%;
-    transform: translateX(-50%);
+    bottom: 1.25rem;
   }
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .pc-fade {
-    animation: none;
+/* Very narrow phones: keep two CTAs on one row */
+@media (max-width: 379px) {
+  .pc-links__row {
+    gap: 0.5rem;
+  }
+  .pc-cta {
+    padding: 0.65rem 0.85rem;
+    font-size: 0.65rem;
+    letter-spacing: 0.08em;
   }
 }
 
-/* Prev/Next navigation arrows for hero slider */
-.pc-nav {
-  position: absolute;
-  z-index: 30;
-  top: 50%;
-  transform: translateY(-50%);
-}
-.pc-nav--prev {
-  left: var(--pc-gutter);
-}
-.pc-nav--next {
-  right: var(--pc-gutter);
-}
-.pc-nav[aria-hidden="true"] {
-  display: none;
-}
-
-@media (max-width: 1023px) {
-  .pc-nav--prev {
-    left: calc(var(--pc-gutter) + 0.5rem);
-  }
-  .pc-nav--next {
-    right: calc(var(--pc-gutter) + 0.5rem);
-  }
-}
-
-/* Shared slider controls (hero, marquee, ticker) */
+/* Shared slider controls (marquee, ticker) */
 .slider-nav-btn {
   display: inline-flex;
   align-items: center;
@@ -615,11 +592,11 @@ h1, h2, h3, h4, h5, h6 {
   cursor: pointer;
   backdrop-filter: blur(10px);
   transition:
-    border-color var(--duration-fast) var(--ease-out-expo),
-    background-color var(--duration-fast) var(--ease-out-expo),
-    color var(--duration-fast) var(--ease-out-expo),
-    box-shadow var(--duration-fast) var(--ease-out-expo),
-    transform var(--duration-medium) var(--ease-out-expo) !important;
+    border-color 0.3s var(--ease-out-expo),
+    background-color 0.3s var(--ease-out-expo),
+    color 0.3s var(--ease-out-expo),
+    box-shadow 0.3s var(--ease-out-expo),
+    transform 0.3s var(--ease-out-expo);
 }
 .slider-nav-btn:hover {
   border-color: var(--color-accent);
@@ -640,38 +617,79 @@ h1, h2, h3, h4, h5, h6 {
    as physical 'rise toward the viewer'. */
 .lift-card {
   transition:
-    transform var(--duration-medium) var(--ease-out-expo),
-    translate var(--duration-medium) var(--ease-out-expo),
-    scale var(--duration-medium) var(--ease-out-expo),
-    background-color var(--duration-fast) var(--ease-out-expo),
-    border-color var(--duration-fast) var(--ease-out-expo),
-    box-shadow var(--duration-slow) var(--ease-out-expo);
+    transform 0.3s var(--ease-out-expo),
+    translate 0.3s var(--ease-out-expo),
+    scale 0.3s var(--ease-out-expo),
+    background-color 0.3s var(--ease-out-expo),
+    border-color 0.3s var(--ease-out-expo),
+    box-shadow 0.3s var(--ease-out-expo);
 }
 .lift-card:hover {
-  transform: translateY(-6px);
-  translate: 0 -6px;
+  transform: translateY(-2px);
+  translate: 0 -2px;
   box-shadow:
-    0 1px 2px rgba(0, 0, 0, 0.3),
-    0 12px 28px -6px rgba(0, 0, 0, 0.45),
-    0 24px 56px -12px rgba(0, 0, 0, 0.5);
+    0 1px 2px rgba(0, 0, 0, 0.15),
+    0 6px 16px -4px rgba(0, 0, 0, 0.2);
 }
 
 /* Images inside cards: slow the zoom and ease it — a 500ms linear scale
    reads cheap; a 700ms expo scale reads intentional. */
 .lift-zoom {
   transition:
-    transform var(--duration-slow) var(--ease-out-expo),
-    scale var(--duration-slow) var(--ease-out-expo);
+    transform 0.3s var(--ease-out-expo),
+    scale 0.3s var(--ease-out-expo);
 }
 .group:hover .lift-zoom,
 .lift-zoom:hover {
-  transform: scale(1.06);
+  transform: scale(1.03);
+}
+
+/* Nav active underline — slides in from left under the active link */
+.nav-link-active::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  bottom: -1px;
+  height: 2px;
+  width: 100%;
+  background: var(--color-accent);
+  border-radius: 1px;
+  animation: nav-underline-in 0.3s var(--ease-out-expo) both;
+}
+@keyframes nav-underline-in {
+  from {
+    transform: scaleX(0);
+    transform-origin: left;
+  }
+  to {
+    transform: scaleX(1);
+    transform-origin: left;
+  }
+}
+
+/* Search shortcut hint badge */
+.search-kbd {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  border-radius: 4px;
+  border: 1px solid var(--color-border);
+  background: var(--color-bg-card, var(--color-bg));
+  padding: 1px 5px;
+  font-size: 11px;
+  font-family: ui-monospace, monospace;
+  color: var(--color-fg-faint);
+  line-height: 1.4;
+  pointer-events: none;
 }
 
 /* Page transitions — app/template.tsx remounts on every navigation, replaying
    this entrance so route changes fade up smoothly instead of hard-swapping. */
 .page-transition {
   animation: page-in var(--duration-medium) var(--ease-out-expo) both;
+}
+html[data-page-transitions="off"] .page-transition {
+  animation: none;
 }
 @keyframes page-in {
   from {
@@ -698,9 +716,15 @@ h1, h2, h3, h4, h5, h6 {
   opacity: 1;
   transform: translateY(0);
 }
-/* Reduced motion: reveal instantly */
+/* Reveals switched off in admin: content is simply visible */
+html[data-reveals="off"] .reveal {
+  opacity: 1;
+  transform: none;
+  transition: none;
+}
+/* Reduced motion (only when the site is set to honour it): reveal instantly */
 @media (prefers-reduced-motion: reduce) {
-  .reveal {
+  html[data-motion="respect"] .reveal {
     opacity: 1;
     transform: none;
     transition: none;
@@ -735,11 +759,11 @@ h1, h2, h3, h4, h5, h6 {
   pointer-events: none;
   transform: translateY(8px);
   transition:
-    opacity var(--duration-medium) var(--ease-out-expo),
-    transform var(--duration-medium) var(--ease-out-expo),
-    border-color var(--duration-fast) var(--ease-out-expo),
-    background-color var(--duration-fast) var(--ease-out-expo),
-    color var(--duration-fast) var(--ease-out-expo);
+    opacity 0.3s var(--ease-out-expo),
+    transform 0.3s var(--ease-out-expo),
+    border-color 0.3s var(--ease-out-expo),
+    background-color 0.3s var(--ease-out-expo),
+    color 0.3s var(--ease-out-expo);
 }
 .back-to-top.is-visible {
   opacity: 1;
@@ -763,15 +787,165 @@ h1, h2, h3, h4, h5, h6 {
   }
 }
 
-/* Draggable strips: grab cursor must be visible over the slides too
-   (Swiper only applies grabCursor to the container element). */
-.marquee-swiper,
-.ticker-swiper {
-  cursor: grab;
+/* ─────────────────────────────────────────────────────────────
+   Marquee & Ticker — MomentumSlider strips
+
+   Both use the same momentum engine as the hero slider.
+   Horizontal drag with velocity → snap to nearest slide.
+   ───────────────────────────────────────────────────────────── */
+
+/* Shared scaffolding for all momentum strips */
+.marquee-section,
+.ticker-section {
+  position: relative;
+  width: 100%;
+  overflow: hidden;
+  background: var(--color-surface);
 }
-.marquee-swiper:active,
-.ticker-swiper:active {
+.marquee-container,
+.ticker-container {
+  position: relative;
+  width: 100%;
+  overflow: hidden;
+  cursor: grab;
+  touch-action: pan-y;
+}
+.marquee-container {
+  height: 16rem;
+}
+.ticker-container {
+  height: 48px;
+}
+@media (max-width: 639px) {
+  .marquee-container {
+    height: 13rem;
+  }
+  .ticker-container {
+    height: 40px;
+  }
+}
+.marquee-container:active,
+.ticker-container:active {
   cursor: grabbing;
+}
+/* Drag disabled in admin settings: plain cursor */
+.strip--static .marquee-container,
+.strip--static .ticker-container {
+  cursor: default;
+}
+/* Engine-driven nodes must be instant. `transition` is not inherited, so the
+   cards inside keep their own hover transitions. */
+.marquee-container .ms-track,
+.ticker-container .ms-track,
+.marquee-container .ms-slide,
+.ticker-container .ms-slide {
+  transition: none !important;
+}
+.marquee-container .ms-track,
+.ticker-container .ms-track {
+  position: absolute;
+  display: flex;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  white-space: nowrap;
+  will-change: transform;
+}
+.marquee-container .ms-slide,
+.ticker-container .ms-slide {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  user-select: none;
+  flex-shrink: 0;
+}
+/* Images/links inside any momentum slide must never become native drag
+   sources: a native drag swallows mouseup and leaves the slider "held"
+   until the next click. The engine also cancels `dragstart`. */
+.ms-slide img,
+.ms-slide a {
+  -webkit-user-drag: none;
+  user-select: none;
+}
+
+/* ── Marquee (work showcase strip) ── */
+.marquee-section {
+  border-y: 1px solid var(--color-border);
+  padding: 1.5rem 0;
+}
+.marquee-card {
+  position: relative;
+  width: clamp(14rem, 28vw, 20rem);
+  height: 13rem;
+  overflow: hidden;
+  border-radius: 0.75rem;
+  border: 1px solid var(--color-border);
+  margin-right: 20px;
+  transition:
+    transform 0.3s var(--ease-out-expo),
+    border-color 0.3s var(--ease-out-expo),
+    box-shadow 0.3s var(--ease-out-expo);
+}
+.marquee-card:hover {
+  transform: translateY(-4px);
+  border-color: var(--color-border-strong);
+  box-shadow:
+    0 1px 2px rgba(0, 0, 0, 0.3),
+    0 8px 24px -4px rgba(0, 0, 0, 0.4);
+}
+@media (min-width: 640px) {
+  .marquee-card {
+    width: clamp(14rem, 22vw, 18rem);
+    height: 16rem;
+  }
+}
+@media (min-width: 1024px) {
+  .marquee-card {
+    width: clamp(14rem, 18vw, 16rem);
+    height: 16rem;
+  }
+}
+
+/* ── Ticker (trusted logos strip) ── */
+.ticker-section {
+  border-bottom: 1px solid var(--color-border);
+  padding: 2rem 0;
+}
+.ticker-label-wrap {
+  display: flex;
+  justify-content: center;
+  padding: 0 1.25rem;
+  margin-bottom: 1.5rem;
+}
+.ticker-label {
+  font-size: 0.75rem; /* 12px floor for legibility */
+  font-weight: 600;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: var(--color-fg-faint);
+}
+.ticker-card {
+  position: relative;
+  width: 144px;
+  height: 40px;
+  margin-right: 48px;
+  flex-shrink: 0;
+  transition: transform 0.3s var(--ease-out-expo);
+}
+.ticker-card:hover {
+  transform: translateY(-2px);
+}
+@media (min-width: 640px) {
+  .ticker-card {
+    width: 144px;
+    height: 48px;
+    margin-right: 56px;
+  }
+}
+@media (min-width: 1024px) {
+  .ticker-card {
+    margin-right: 64px;
+  }
 }
 
 /* Admin pages hide the site-wide fixed widgets (scroll progress, back-to-top):
@@ -781,45 +955,7 @@ html[data-admin-ui="true"] .back-to-top {
   display: none;
 }
 
-/* Marquee/ticker: wrapper easing = glide to destination on release.
-   (Swiper transitions .swiper-wrapper, not the slides.)
-   !important overrides Swiper's inline transition-timing-function. */
-.marquee-ticker-glide .swiper-wrapper {
-  transition-timing-function: linear !important;
-  transition-property: transform !important;
-}
-.marquee-ticker-glide .swiper-wrapper:active {
-  /* While a drag is in progress Swiper disables the transition; on release it
-     re-enables it with `speed`. Linear reads smoother for a delay-0 marquee
-     returning to its continuous drift. */
-  transition-timing-function: linear !important;
-}
 
-/* Marquee slides — smooth opacity crossfade so content blends during drift */
-.marquee-ticker-glide .swiper-slide {
-  transition: opacity 0.4s var(--ease-out-expo),
-              transform 0.4s var(--ease-out-expo);
-}
-.marquee-ticker-glide .swiper-slide-active {
-  opacity: 1;
-}
-.marquee-ticker-glide .swiper-slide-prev,
-.marquee-ticker-glide .swiper-slide-next {
-  opacity: 0.85;
-}
-
-/* Marquee controls overlay the strip edges */
-.marquee-controls {
-  pointer-events: none;
-}
-.marquee-controls .slider-nav-btn {
-  pointer-events: auto;
-}
-
-/* Space for the overlay controls so images never sit under them */
-.marquee-swiper {
-  padding-bottom: 2.75rem;
-}
 
 /* typed.js cursor (autoInsertCss is disabled; typed.js is not reduced-motion-aware) */
 .typed-cursor {
@@ -832,14 +968,17 @@ html[data-admin-ui="true"] .back-to-top {
   50% { opacity: 0; }
 }
 @media (prefers-reduced-motion: reduce) {
-  .typed-cursor { animation: none; }
+  html[data-motion="respect"] .typed-cursor { animation: none; }
 }
 
-/* Global reduced-motion respect */
+/* Global reduced-motion respect — only when Admin → Site Settings → Motion
+   "Honour the visitor's OS reduce-motion preference" is on. Otherwise the site
+   always animates (Windows "Animation effects: off" would otherwise kill every
+   transition and all autoplay). */
 @media (prefers-reduced-motion: reduce) {
-  *,
-  *::before,
-  *::after {
+  html[data-motion="respect"] *,
+  html[data-motion="respect"] *::before,
+  html[data-motion="respect"] *::after {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;

@@ -68,7 +68,7 @@ export function OrderForm({ works, preselected }: { works: WorkOption[]; presele
         </p>
         <Link
           href="/works"
-          className="mt-8 inline-block cursor-pointer rounded-lg border border-border-strong px-7 py-3 text-sm font-semibold uppercase tracking-wider text-fg transition-all duration-200 hover:border-accent hover:bg-accent-soft hover:text-accent"
+          className="mt-8 inline-block cursor-pointer rounded-lg border border-border-strong px-7 py-3 text-sm font-semibold uppercase tracking-wider text-fg transition-all duration-fast hover:border-accent hover:bg-accent-soft hover:text-accent"
         >
           Keep Browsing Work
         </Link>
@@ -197,7 +197,7 @@ export function OrderForm({ works, preselected }: { works: WorkOption[]; presele
       <button
         type="submit"
         disabled={status === "submitting"}
-        className="w-full cursor-pointer rounded-lg bg-accent px-8 py-4 text-sm font-semibold uppercase tracking-wider text-on-accent transition-all duration-200 hover:bg-accent-hover disabled:cursor-not-allowed disabled:opacity-60"
+        className="w-full cursor-pointer rounded-lg bg-accent px-8 py-4 text-sm font-semibold uppercase tracking-wider text-on-accent transition-all duration-fast hover:bg-accent-hover disabled:cursor-not-allowed disabled:opacity-60"
       >
         {status === "submitting" ? "Placing order…" : "Place Order"}
       </button>

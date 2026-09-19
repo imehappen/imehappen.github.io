@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 40" role="img" aria-label="acme logo">
+  <title>acme</title>
+  <g fill="none" stroke="#94a3b8" stroke-width="2">
+    <circle cx="18" cy="20" r="10" />
+    <path d="M8 20h20M18 10c-3.5 3-3.5 17 0 20M18 10c3.5 3 3.5 17 0 20" />
+  </g>
+  <text x="36" y="25" font-family="Arial, sans-serif" font-size="14" font-weight="bold" fill="#94a3b8">acme</text>
+</svg>

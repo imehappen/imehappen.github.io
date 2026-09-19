@@ -1,15 +1,15 @@
 import { NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import { isMongoConfigured } from "@/lib/mongodb";
-import { isAuthConfigured, getSession } from "@/lib/auth";
+import { isAuthConfigured, requireStaffSession } from "@/lib/auth";
 
 /**
- * User routes for "me" (admin) and "my clients".
+ * User routes.
  *
- * POST /api/users — register. The FIRST account becomes admin. In demo mode
- *                   (no DB/auth env) it acknowledges the request so the flow
- *                   is testable, without pretending accounts were stored.
- * GET  /api/users — admin-only listing (requires DB + AUTH_SECRET).
+ * POST /api/users — public register. The FIRST account becomes superadmin;
+ *                   everyone else is a client. In demo mode (no DB/auth env)
+ *                   it acknowledges the request without storing anything.
+ * GET  /api/users — staff-only listing (requires DB + AUTH_SECRET).
  */
 export async function POST(request: Request) {
   let body: Record<string, unknown>;
@@ -22,7 +22,6 @@ export async function POST(request: Request) {
   const name = String(body.name ?? "").trim();
   const email = String(body.email ?? "").trim().toLowerCase();
   const password = String(body.password ?? "");
-  const role = body.role === "admin" ? "admin" : "client";
   const company = String(body.company ?? "").trim();
   const phone = String(body.phone ?? "").trim();
 
@@ -60,9 +59,9 @@ export async function POST(request: Request) {
       return NextResponse.json({ ok: false, error: "An account with this email already exists." }, { status: 409 });
     }
 
-    // First registered user becomes admin ("me"); everyone else is a client.
+    // First registered user becomes SUPERADMIN ("me"); everyone else is a client.
     const count = await User.estimatedDocumentCount();
-    const effectiveRole = count === 0 ? "admin" : role;
+    const effectiveRole = count === 0 ? "superadmin" : "client";
 
     const user = await User.create({ name, email, passwordHash, role: effectiveRole, company, phone });
     return NextResponse.json(
@@ -83,9 +82,9 @@ export async function GET() {
     );
   }
 
-  const session = await getSession();
-  if (!session || session.role !== "admin") {
-    return NextResponse.json({ ok: false, error: "Admin access required." }, { status: 403 });
+  const session = await requireStaffSession();
+  if (!session) {
+    return NextResponse.json({ ok: false, error: "Staff access required." }, { status: 403 });
   }
 
   try {

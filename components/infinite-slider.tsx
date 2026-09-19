@@ -1,70 +1,102 @@
 "use client";
 
 /**
- * InfiniteSlider — seamless, full-width marquee of portfolio images.
- * Replaces the old 3D coverflow from the static site.
+ * InfiniteSlider — full-width work strip on MomentumSlider.
  *
- * How it works: the track renders the image list TWICE and animates
- * translateX from 0 to -50% on an infinite loop, producing a gapless wrap.
- * Hover pauses; reduced-motion renders a static scrollable strip instead.
+ * Drag with momentum, snap to nearest slide. Multiple slides visible at once.
+ * Same physics engine as the hero slider (lmgonzalves/momentum-slider port).
+ *
+ * Infinite: the engine clones `loop` slides at each end and wraps the track
+ * position, so `loop` must be >= the number of slides visible at once. We
+ * render the items repeated until the strip is wider than any viewport and
+ * set loop to that rendered count.
  */
 
+import { useEffect, useMemo, useRef } from "react";
 import Image from "next/image";
+import MomentumSlider from "@/lib/momentum-slider";
+import type { StripOptions } from "@/components/trusted-ticker";
 
 export interface InfiniteSlide {
   src: string;
   alt: string;
 }
 
-export function InfiniteSlider({ items }: { items: InfiniteSlide[] }) {
-  if (items.length === 0) return null;
+/** Minimum rendered cards per loop segment (~16rem + gap each => > 3800px). */
+const MIN_RENDERED = 14;
 
-  // Duplicate the list for the seamless wrap
-  const track = [...items, ...items];
+export function InfiniteSlider({
+  items,
+  speed = 45,
+  direction = "left",
+  pauseOnHover = true,
+  draggable = true,
+  respectReducedMotion = true,
+}: { items: InfiniteSlide[] } & StripOptions) {
+  const containerRef = useRef<HTMLDivElement | null>(null);
+  const engine = useRef<MomentumSlider | null>(null);
+
+  const rendered = useMemo(() => {
+    if (items.length === 0) return [];
+    const repeat = Math.ceil(MIN_RENDERED / items.length);
+    return Array.from({ length: repeat }, () => items).flat();
+  }, [items]);
+
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container || rendered.length === 0) return;
+
+    const slider = new MomentumSlider({
+      el: container,
+      cssClass: "ms-marquee",
+      vertical: false,
+      interactive: draggable,
+      loop: rendered.length,
+      // Continuous drift (px/s); pauses on hover/drag, off-screen, hidden tab.
+      // Negative speed = drift to the right.
+      autoScroll: direction === "right" ? -speed : speed,
+      pauseOnHover,
+      respectReducedMotion,
+    });
+
+    engine.current = slider;
+
+    const observer = new ResizeObserver(() => slider.refresh());
+    observer.observe(container);
+
+    return () => {
+      observer.disconnect();
+      slider.destroy();
+      engine.current = null;
+    };
+    // Only the count matters: a new array identity with the same length must
+    // not tear down the engine (which would snap the strip back to slide 0).
+  }, [rendered.length, speed, direction, pauseOnHover, draggable, respectReducedMotion]);
+
+  if (rendered.length === 0) return null;
 
   return (
     <section
       aria-label="Work showcase strip"
-      className="marquee-section w-full overflow-hidden border-y border-border bg-surface py-6"
+      className={`marquee-section${draggable ? "" : " strip--static"}`}
     >
-      <div className="marquee-track flex w-max items-center gap-5 px-5">
-        {track.map((item, i) => (
-          <figure
-            key={`${item.src}-${i}`}
-            aria-hidden={i >= items.length}
-            className="relative h-52 w-72 shrink-0 overflow-hidden rounded-xl border border-border sm:h-64 sm:w-96"
-          >
-            <Image
-              src={item.src}
-              alt={item.alt}
-              fill
-              sizes="384px"
-              className="object-cover transition-transform duration-500 hover:scale-[1.03]"
-            />
-            <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-bg/60 via-transparent to-transparent opacity-0 transition-opacity duration-300 hover:opacity-100" />
-          </figure>
-        ))}
+      <div ref={containerRef} className="ms-container marquee-container">
+        <ul className="ms-track">
+          {rendered.map((item, i) => (
+            <li className="ms-slide" key={`${item.src}-${i}`}>
+              <div className="marquee-card">
+                <Image
+                  src={item.src}
+                  alt={item.alt}
+                  fill
+                  sizes="(max-width: 640px) 80vw, (max-width: 1024px) 45vw, 30vw"
+                  className="object-cover"
+                />
+              </div>
+            </li>
+          ))}
+        </ul>
       </div>
-
-      <style
-        dangerouslySetInnerHTML={{
-          __html: `
-            @keyframes marquee {
-              from { transform: translateX(0); }
-              to { transform: translateX(-50%); }
-            }
-            .marquee-track {
-              animation: marquee 45s linear infinite;
-            }
-            .marquee-section:hover .marquee-track {
-              animation-play-state: paused;
-            }
-            @media (prefers-reduced-motion: reduce) {
-              .marquee-track { animation: none; overflow-x: auto; }
-            }
-          `,
-        }}
-      />
     </section>
   );
 }
